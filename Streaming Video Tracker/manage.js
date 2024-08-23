@@ -4,8 +4,8 @@ let videoList = [];
 function loadVideos() {
   chrome.storage.local.get('videos', function(data) {
     videoList = data.videos || [];
+    videoList = videoList.filter(video => video.status !== 'unknown');
     renderVideoList();
-    updateStats();
   });
 }
 
@@ -68,12 +68,9 @@ function renderVideoList(filteredList = videoList) {
     button.addEventListener('click', function() {
       const index = this.dataset.index;
       if (confirm('この評価を削除してもよろしいですか？')) {
-        delete videoList[index].rating;
-        delete videoList[index].comment;
-        delete videoList[index].hasRating;
+        videoList.splice(index, 1); // 完全に削除
         saveVideos().then(() => {
           renderVideoList();
-          updateStats();
         });
       }
     });
@@ -120,30 +117,6 @@ function sortVideos() {
   searchAndFilterVideos();
 }
 
-function updateStats() {
-  const stats = document.getElementById('stats');
-  const totalWatched = videoList.reduce((sum, video) => sum + (video.watchedDuration || 0), 0);
-  const completedCount = videoList.filter(v => v.status === 'completed').length;
-  const genreCounts = videoList.reduce((acc, video) => {
-    if (video.genre) {
-      acc[video.genre] = (acc[video.genre] || 0) + 1;
-    }
-    return acc;
-  }, {});
-
-  stats.innerHTML = `
-    <h2>統計情報</h2>
-    <p><strong>総視聴時間:</strong> ${formatDuration(totalWatched)}</p>
-    <p><strong>視聴完了作品数:</strong> ${completedCount}</p>
-    <h3>ジャンル別視聴数:</h3>
-    <ul>
-      ${Object.entries(genreCounts).map(([genre, count]) => `
-        <li>${getGenreJapanese(genre)}: ${count}作品</li>
-      `).join('')}
-    </ul>
-  `;
-}
-
 document.addEventListener('DOMContentLoaded', function() {
   loadVideos();
   document.getElementById('search-button').addEventListener('click', searchAndFilterVideos);
@@ -157,6 +130,5 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
   if (namespace === 'local' && changes.videos) {
     videoList = changes.videos.newValue || [];
     renderVideoList();
-    updateStats();
   }
 });

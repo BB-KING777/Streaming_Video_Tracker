@@ -1,5 +1,4 @@
 // background.js
-
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "updateVideoData" || message.action === "updateRating") {
     updateVideoData(message.data, sender.tab.id);
@@ -41,7 +40,6 @@ function updateVideoData(data, tabId) {
         lastUpdated: new Date().toISOString()
       });
     }
-
     chrome.storage.local.set({ videos: videos }, () => {
       if (chrome.runtime.lastError) {
         console.error('Error saving data:', chrome.runtime.lastError);

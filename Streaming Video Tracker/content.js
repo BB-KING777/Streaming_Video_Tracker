@@ -16,6 +16,7 @@ let videoData = {
 };
 let intervalId = null;
 let titleObserver = null;
+let lastVideoId = null;
 
 function detectStreamingService() {
   const host = window.location.hostname;
@@ -76,6 +77,7 @@ function resetVideoData() {
     genre: '',
     hasRating: false
   };
+  lastVideoId = null;
 }
 
 function detectVideoExit() {
@@ -106,20 +108,21 @@ function getVideoInfo() {
     const currentTime = video.currentTime;
     const duration = video.duration;
 
-    if (videoData.mainTitle && 
-        (videoData.totalDuration !== duration || 
-         Math.abs(videoData.lastPosition - currentTime) > 30)) {
-      
-      sendMessageWithRetry({
-        action: "updateVideoData",
-        data: { ...videoData, status: 'completed' }
-      });
+    // ビデオIDを生成（タイトルと長さの組み合わせ）
+    const currentVideoId = `${videoData.mainTitle}_${videoData.episodeTitle}_${duration.toFixed(0)}`;
 
-      if (videoData.totalDuration !== duration) {
-        resetVideoData();
-      } else {
-        videoData.watchedDuration += Math.min(currentTime - videoData.lastPosition, 30);
+    // 新しいビデオが開始されたかチェック
+    if (currentVideoId !== lastVideoId) {
+      if (lastVideoId) {
+        // 前のビデオのデータを保存
+        sendMessageWithRetry({
+          action: "updateVideoData",
+          data: { ...videoData, status: 'completed' }
+        });
       }
+      // 新しいビデオのデータをリセット
+      resetVideoData();
+      lastVideoId = currentVideoId;
     }
 
     videoData.service = currentService;

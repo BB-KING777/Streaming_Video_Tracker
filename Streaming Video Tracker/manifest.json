@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Streaming Video Tracker",
-  "version": "1.2",
+  "version": "2.1",
   "description": "複数のストリーミングサービスで視聴した動画を追跡します",
   "permissions": [
     "activeTab",
@@ -31,8 +31,11 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["manage.html"],
+      "resources": ["manage.html", "stats.html", "react.development.js", "react-dom.development.js", "recharts.min.js", "stats.js"],
       "matches": ["<all_urls>"]
     }
-  ]
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+  }
 }

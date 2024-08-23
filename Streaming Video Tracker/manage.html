@@ -1,124 +1,152 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ストリーミング視聴履歴管理</title>
-  <style>
-    body { 
-      font-family: 'Segoe UI', 'Meiryo', sans-serif; 
-      line-height: 1.6; 
-      margin: 0; 
-      padding: 20px; 
-      background-color: #f4f4f4;
-    }
-    h1, h2, h3 { color: #333; }
-    #search-box { 
-      background-color: #fff;
-      padding: 15px;
-      border-radius: 5px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    #search-input, #genre-filter, #sort-select {
-      margin-right: 10px;
-      padding: 5px;
-      border: 1px solid #ddd;
-      border-radius: 3px;
-    }
-    #search-button {
-      padding: 5px 10px;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 3px;
-      cursor: pointer;
-    }
-    #search-button:hover {
-      background-color: #45a049;
-    }
-    #video-list { 
-      list-style-type: none; 
-      padding: 0; 
-    }
-    .video-item { 
-      background-color: #fff;
-      border: 1px solid #ddd; 
-      margin-bottom: 10px; 
-      padding: 15px; 
-      border-radius: 5px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    .video-title { 
-      font-weight: bold;
-      font-size: 18px;
-      margin-bottom: 10px;
-    }
-    .video-info { 
-      color: #666; 
-      margin-bottom: 10px;
-    }
-    .edit-comment { 
-      width: 100%; 
-      margin-top: 10px;
-      padding: 5px;
-      border: 1px solid #ddd;
-      border-radius: 3px;
-    }
-    .save-comment {
-      margin-top: 5px;
-      padding: 5px 10px;
-      background-color: #008CBA;
-      color: white;
-      border: none;
-      border-radius: 3px;
-      cursor: pointer;
-    }
-    .save-comment:hover {
-      background-color: #007B9A;
-    }
-    #stats {
-      background-color: #fff;
-      padding: 15px;
-      border-radius: 5px;
-      margin-top: 20px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    .delete-rating {
-      background-color: #f44336;
-      color: white;
-      border: none;
-      padding: 5px 10px;
-      text-align: center;
-      text-decoration: none;
-      display: inline-block;
-      font-size: 12px;
-      margin: 4px 2px;
-      cursor: pointer;
-      border-radius: 3px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ストリーミング視聴履歴管理</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --background-color: #f5f7fa;
+            --text-color: #333;
+            --card-background: #fff;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        #search-box {
+            background-color: var(--card-background);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px var(--shadow-color);
+            margin-bottom: 30px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+        #search-box select, #search-box input, #search-box button {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        #search-box button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #search-box button:hover {
+            background-color: #2980b9;
+        }
+        #video-list {
+            list-style-type: none;
+            padding: 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .video-item {
+            background-color: var(--card-background);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px var(--shadow-color);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .video-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px var(--shadow-color);
+        }
+        .video-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+        .video-info p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        .edit-comment {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            resize: vertical;
+        }
+        .save-comment, .delete-rating {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            margin-top: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .save-comment:hover, .delete-rating:hover {
+            background-color: #27ae60;
+        }
+        .delete-rating {
+            background-color: #e74c3c;
+        }
+        .delete-rating:hover {
+            background-color: #c0392b;
+        }
+        @media (max-width: 768px) {
+            #search-box {
+                flex-direction: column;
+            }
+            #search-box select, #search-box input, #search-box button {
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 <body>
-  <h1>ストリーミング視聴履歴管理</h1>
-  <div id="search-box">
-    <input type="text" id="search-input" placeholder="タイトルで検索">
-    <select id="genre-filter">
-      <option value="">全てのジャンル</option>
-      <option value="movie">映画</option>
-      <option value="drama">ドラマ</option>
-      <option value="anime">アニメ</option>
-      <option value="other">その他</option>
-    </select>
-    <button id="search-button">検索</button>
-    <select id="sort-select">
-      <option value="date">日付順</option>
-      <option value="rating">評価順</option>
-      <option value="title">タイトル順</option>
-    </select>
-  </div>
-  <div id="stats"></div>
-  <ul id="video-list"></ul>
-  <script src="manage.js"></script>
+    <div class="container">
+        <h1>ストリーミング視聴履歴管理</h1>
+        
+        <div id="search-box">
+            <select id="genre-filter">
+                <option value="">全てのジャンル</option>
+                <option value="movie">映画</option>
+                <option value="drama">ドラマ</option>
+                <option value="anime">アニメ</option>
+                <option value="other">その他</option>
+            </select>
+            <input type="text" id="search-input" placeholder="タイトルを検索">
+            <button id="search-button">検索</button>
+            <select id="sort-select">
+                <option value="date">日付順</option>
+                <option value="rating">評価順</option>
+                <option value="title">タイトル順</option>
+            </select>
+        </div>
+
+        <ul id="video-list"></ul>
+    </div>
+
+    <script src="manage.js"></script>
 </body>
 </html>
