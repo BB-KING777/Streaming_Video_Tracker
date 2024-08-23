@@ -1,0 +1,38 @@
+{
+  "manifest_version": 3,
+  "name": "Streaming Video Tracker",
+  "version": "1.2",
+  "description": "複数のストリーミングサービスで視聴した動画を追跡します",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "tabs",
+    "webRequest"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.unext.jp/*",
+        "*://*.netflix.com/*",
+        "*://*.primevideo.com/*",
+        "*://*.disneyplus.com/*"
+      ],
+      "js": ["content.js"]
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["manage.html"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

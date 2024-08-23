@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Streaming Video Tracker</title>
+  <style>
+    body { 
+      width: 300px; 
+      font-family: 'Segoe UI', 'Meiryo', sans-serif;
+      padding: 10px;
+      margin: 0;
+    }
+    h1 {
+      font-size: 18px;
+      margin-top: 0;
+    }
+    .video-item { 
+      margin-bottom: 10px; 
+      border-bottom: 1px solid #ccc; 
+      padding-bottom: 10px; 
+    }
+    .video-title { 
+      font-weight: bold;
+      font-size: 14px;
+    }
+    .video-info { 
+      font-size: 12px; 
+      color: #666; 
+    }
+    #stats { 
+      margin-top: 20px; 
+      font-weight: bold;
+      font-size: 14px;
+    }
+    #manage-button, #rate-button { 
+      display: block; 
+      width: 100%; 
+      padding: 10px; 
+      color: white; 
+      text-align: center; 
+      text-decoration: none; 
+      font-size: 14px; 
+      margin-top: 10px; 
+      border: none; 
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    #manage-button {
+      background-color: #4CAF50;
+    }
+    #rate-button {
+      background-color: #008CBA;
+    }
+    #manage-button:hover {
+      background-color: #45a049;
+    }
+    #rate-button:hover {
+      background-color: #007B9A;
+    }
+  </style>
+</head>
+<body>
+  <h1>視聴履歴</h1>
+  <div id="videoList"></div>
+  <div id="stats"></div>
+  <button id="rate-button">現在の動画を評価</button>
+  <button id="manage-button">管理ページを開く</button>
+  <script src="popup.js"></script>
+</body>
+</html>
