@@ -378,7 +378,7 @@ function stopTracking() {
       navigator.mediaSession.metadata?.removeEventListener('change', handleMediaSessionChange);
     }
     window.removeEventListener('beforeunload', handlePageUnload);
-    // Ensure we update the status when stopping tracking
+      // Ensure we update the status when stopping tracking
     if (videoData.status === 'in progress') {
       videoData.status = 'interrupted';
       sendMessageWithRetry({
@@ -396,6 +396,20 @@ function handleMediaSessionChange() {
     videoData.episodeTitle = metadata.artist || videoData.episodeTitle;
     console.log(`Updated title from Media Session: ${videoData.mainTitle} - ${videoData.episodeTitle}`);
   }
+}
+
+// Amazon Prime Video用の動画情報取得
+function getAmazonPrimeVideoInfo() {
+  const titleElement = document.querySelector('.atvwebplayersdk-title-text');
+  const subtitleElement = document.querySelector('.atvwebplayersdk-subtitle-text');
+  if (titleElement) {
+    videoData.mainTitle = titleElement.textContent.trim();
+    videoData.episodeTitle = subtitleElement ? subtitleElement.textContent.trim() : '';
+    videoData.service = 'Amazon Prime';
+    videoData.status = 'in progress';
+    return videoData;
+  }
+  return null;
 }
 
 // 初期化
@@ -417,9 +431,14 @@ window.addEventListener('error', function(event) {
   }
 });
 
+// メッセージリスナーを追加
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "showRatingPopup") {
     showRatingPopup(true);
     sendResponse({success: true});
+  } else if (request.action === "getAmazonPrimeVideoInfo") {
+    const videoInfo = getAmazonPrimeVideoInfo();
+    sendResponse(videoInfo);
   }
+  return true;
 });

@@ -1,4 +1,5 @@
 // popup.js
+
 function formatDuration(seconds) {
   if (isNaN(seconds) || seconds === 0) return "不明";
   const hours = Math.floor(seconds / 3600);
@@ -61,6 +62,83 @@ function updateStats() {
   });
 }
 
+function showManualRatingForm() {
+  const ratingForm = document.createElement('div');
+  ratingForm.id = 'manual-rating-form';
+  ratingForm.innerHTML = `
+    <h3>動画を評価</h3>
+    <input type="text" id="manual-title" placeholder="タイトルを入力" style="width: 100%; margin-bottom: 10px;">
+    <select id="manual-service" style="width: 100%; margin-bottom: 10px;">
+      <option value="">サービスを選択</option>
+      <option value="Amazon Prime">Amazon Prime</option>
+      <option value="Netflix">Netflix</option>
+      <option value="U-NEXT">U-NEXT</option>
+      <option value="Disney+">Disney+</option>
+      <option value="Other">その他</option>
+    </select>
+    <select id="manual-genre" style="width: 100%; margin-bottom: 10px;">
+      <option value="">ジャンルを選択</option>
+      <option value="movie">映画</option>
+      <option value="drama">ドラマ</option>
+      <option value="anime">アニメ</option>
+      <option value="other">その他</option>
+    </select>
+    <select id="manual-rating" style="width: 100%; margin-bottom: 10px;">
+      <option value="">評価を選択</option>
+      <option value="1">★☆☆☆☆</option>
+      <option value="2">★★☆☆☆</option>
+      <option value="3">★★★☆☆</option>
+      <option value="4">★★★★☆</option>
+      <option value="5">★★★★★</option>
+    </select>
+    <textarea id="manual-comment" placeholder="コメントを入力" rows="4" style="width: 100%; margin-bottom: 10px;"></textarea>
+    <button id="submit-manual-rating" style="width: 100%; padding: 5px;">評価を送信</button>
+  `;
+  document.body.appendChild(ratingForm);
+
+  document.getElementById('submit-manual-rating').addEventListener('click', submitManualRating);
+}
+
+function submitManualRating() {
+  const title = document.getElementById('manual-title').value.trim();
+  const service = document.getElementById('manual-service').value;
+  const genre = document.getElementById('manual-genre').value;
+  const rating = document.getElementById('manual-rating').value;
+  const comment = document.getElementById('manual-comment').value.trim();
+
+  if (!title || !service) {
+    alert('タイトルとサービスは必須です。');
+    return;
+  }
+
+  const videoData = {
+    mainTitle: title,
+    service: service,
+    genre: genre,
+    rating: rating !== '' ? parseInt(rating) : undefined,
+    comment: comment,
+    status: 'completed',
+    hasRating: true,
+    date: new Date().toISOString(),
+    lastUpdated: new Date().toISOString()
+  };
+
+  chrome.runtime.sendMessage({
+    action: "updateRating",
+    data: videoData
+  }, function(response) {
+    if (chrome.runtime.lastError) {
+      console.error('Error saving rating:', chrome.runtime.lastError);
+      alert('評価の保存中にエラーが発生しました。');
+    } else {
+      alert('評価が保存されました。');
+      document.getElementById('manual-rating-form').remove();
+      updateVideoList();
+      updateStats();
+    }
+  });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
   updateVideoList();
   updateStats();
@@ -71,13 +149,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
   document.getElementById('rate-button').addEventListener('click', function() {
     chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-      chrome.tabs.sendMessage(tabs[0].id, {action: "showRatingPopup"}, function(response) {
-        if (chrome.runtime.lastError) {
-          console.error(chrome.runtime.lastError);
-        } else if (response && response.success) {
-          window.close(); // ポップアップを閉じる
-        }
-      });
+      const url = tabs[0].url;
+      if (url.includes('primevideo.com') || url.includes('netflix.com') || url.includes('unext.jp') || url.includes('disneyplus.com')) {
+        // サポートされているストリーミングサービスの場合
+        chrome.tabs.sendMessage(tabs[0].id, {action: "showRatingPopup"}, function(response) {
+          if (chrome.runtime.lastError) {
+            console.error(chrome.runtime.lastError);
+            showManualRatingForm();
+          } else if (response && response.success) {
+            window.close();
+          } else {
+            showManualRatingForm();
+          }
+        });
+      } else {
+        // サポートされていないページの場合、手動評価フォームを表示
+        showManualRatingForm();
+      }
     });
   });
 });

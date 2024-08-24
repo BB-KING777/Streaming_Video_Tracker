@@ -1,7 +1,8 @@
 // background.js
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "updateVideoData" || message.action === "updateRating") {
-    updateVideoData(message.data, sender.tab.id);
+    updateVideoData(message.data);
     sendResponse({ success: true });
   }
 });
@@ -11,14 +12,14 @@ chrome.webRequest.onBeforeRequest.addListener(
     if (details.url.endsWith('/_/updateVideoData')) {
       let decoder = new TextDecoder("utf-8");
       let data = JSON.parse(decoder.decode(details.requestBody.raw[0].bytes));
-      updateVideoData(data.data, details.tabId);
+      updateVideoData(data.data);
     }
   },
   {urls: ["<all_urls>"]},
   ["requestBody"]
 );
 
-function updateVideoData(data, tabId) {
+function updateVideoData(data) {
   chrome.storage.local.get('videos', function(result) {
     let videos = result.videos || [];
     let existingVideoIndex = videos.findIndex(v => 
@@ -45,22 +46,22 @@ function updateVideoData(data, tabId) {
         console.error('Error saving data:', chrome.runtime.lastError);
       } else {
         console.log('Video data updated successfully');
-        updateBadge(tabId);
+        updateGlobalBadge();
       }
     });
   });
 }
 
-function updateBadge(tabId) {
+function updateGlobalBadge() {
   chrome.storage.local.get('videos', function(result) {
     let videos = result.videos || [];
     let inProgressCount = videos.filter(v => v.status === 'in progress').length;
     
     if (inProgressCount > 0) {
-      chrome.action.setBadgeText({ text: inProgressCount.toString(), tabId: tabId });
-      chrome.action.setBadgeBackgroundColor({ color: '#4CAF50', tabId: tabId });
+      chrome.action.setBadgeText({ text: inProgressCount.toString() });
+      chrome.action.setBadgeBackgroundColor({ color: '#4CAF50' });
     } else {
-      chrome.action.setBadgeText({ text: '', tabId: tabId });
+      chrome.action.setBadgeText({ text: '' });
     }
   });
 }
@@ -80,8 +81,17 @@ chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
         console.error('Error updating video status on tab close:', chrome.runtime.lastError);
       } else {
         console.log('Video statuses updated on tab close');
-        updateBadge();
+        updateGlobalBadge();
       }
     });
   });
 });
+
+chrome.runtime.onInstalled.addListener(() => {
+  console.log('Extension installed');
+  updateGlobalBadge();
+});
+
+function handleError(error) {
+  console.error('An error occurred:', error);
+}
