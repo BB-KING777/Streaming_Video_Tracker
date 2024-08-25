@@ -37,6 +37,7 @@ function renderVideoList(filteredList = videoList) {
       <div class="video-info">
         <p><strong>サービス:</strong> ${video.service}</p>
         ${video.genre ? `<p><strong>ジャンル:</strong> ${getGenreJapanese(video.genre)}</p>` : ''}
+        ${video.episodeCount ? `<p><strong>エピソード数:</strong> ${video.episodeCount}</p>` : ''}
         <p><strong>視聴状況:</strong> ${video.status === 'completed' ? '視聴完了' : (video.status === 'in progress' ? '視聴中' : '不明')}</p>
         <p><strong>視聴時間:</strong> ${formatDuration(video.watchedDuration)} / ${formatDuration(video.totalDuration)}</p>
         <p><strong>最終更新:</strong> ${new Date(video.lastUpdated).toLocaleString('ja-JP')}</p>

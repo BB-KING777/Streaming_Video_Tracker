@@ -223,6 +223,9 @@ function showRatingPopup(fromPopup = false) {
         <option value="anime">アニメ</option>
         <option value="other">その他</option>
       </select>
+      <div id="episode-input-container" style="display: none; margin-bottom: 10px;">
+        <input type="number" id="episode-input" placeholder="エピソード数を入力" style="width: 100%;">
+      </div>
       <select id="rating-select" style="width: 100%; margin-bottom: 10px;">
         <option value="">評価を選択</option>
         <option value="1">★☆☆☆☆</option>
@@ -254,6 +257,16 @@ function showRatingPopup(fromPopup = false) {
     popupElement.addEventListener('click', function(e) {
       e.stopPropagation();
     });
+
+    // ジャンル選択時のイベントリスナーを追加
+    document.getElementById('genre-select').addEventListener('change', function() {
+      const episodeInputContainer = document.getElementById('episode-input-container');
+      if (this.value === 'drama' || this.value === 'anime') {
+        episodeInputContainer.style.display = 'block';
+      } else {
+        episodeInputContainer.style.display = 'none';
+      }
+    });
   }
 }
 
@@ -262,6 +275,7 @@ function submitRating() {
   const genre = document.getElementById('genre-select').value;
   const rating = document.getElementById('rating-select').value;
   const comment = document.getElementById('rating-comment').value.trim();
+  const episodeCount = document.getElementById('episode-input').value;
 
   if (rating === '' && genre === '' && comment === '') {
     alert('評価、ジャンル、またはコメントを入力してください。');
@@ -275,7 +289,8 @@ function submitRating() {
   const updatedData = {
     ...videoData,
     rating: rating !== '' ? parseInt(rating) : undefined,
-    comment: comment !== '' ? comment : undefined
+    comment: comment !== '' ? comment : undefined,
+    episodeCount: (genre === 'drama' || genre === 'anime') && episodeCount !== '' ? parseInt(episodeCount) : undefined
   };
 
   Object.keys(updatedData).forEach(key => 
@@ -378,7 +393,7 @@ function stopTracking() {
       navigator.mediaSession.metadata?.removeEventListener('change', handleMediaSessionChange);
     }
     window.removeEventListener('beforeunload', handlePageUnload);
-      // Ensure we update the status when stopping tracking
+    // Ensure we update the status when stopping tracking
     if (videoData.status === 'in progress') {
       videoData.status = 'interrupted';
       sendMessageWithRetry({
