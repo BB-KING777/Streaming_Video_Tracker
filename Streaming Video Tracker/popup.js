@@ -1,5 +1,4 @@
-// popup.js
-
+// ビデオの視聴時間をフォーマットする関数
 function formatDuration(seconds) {
   if (isNaN(seconds) || seconds === 0) return "不明";
   const hours = Math.floor(seconds / 3600);
@@ -7,6 +6,7 @@ function formatDuration(seconds) {
   return `${hours}時間 ${minutes}分`;
 }
 
+// ジャンルを日本語に変換する関数
 function getGenreJapanese(genre) {
   switch (genre) {
     case 'movie': return '映画';
@@ -17,8 +17,9 @@ function getGenreJapanese(genre) {
   }
 }
 
+// ビデオリストを更新する関数
 function updateVideoList() {
-  chrome.storage.local.get('videos', function(data) {
+  chrome.storage.sync.get('videos', function(data) {
     if (chrome.runtime.lastError) {
       console.error('Error fetching data:', chrome.runtime.lastError);
       document.getElementById('videoList').innerHTML = '<p>データの取得中にエラーが発生しました。</p>';
@@ -40,7 +41,7 @@ function updateVideoList() {
           <p>状態: ${video.status === 'completed' ? '視聴完了' : (video.status === 'in progress' ? '視聴中' : '不明')}</p>
           <p>視聴時間: ${formatDuration(video.watchedDuration)} / ${formatDuration(video.totalDuration)}</p>
           <p>最終更新: ${new Date(video.lastUpdated).toLocaleString('ja-JP')}</p>
-          <p>評価: ${'★'.repeat(video.rating || 0)}</p>
+          ${video.rating ? `<p>評価: ${'★'.repeat(video.rating)}</p>` : ''}
         </div>
       `;
       videoList.appendChild(div);
@@ -48,8 +49,9 @@ function updateVideoList() {
   });
 }
 
+// 統計情報を更新する関数
 function updateStats() {
-  chrome.storage.local.get('videos', function(data) {
+  chrome.storage.sync.get('videos', function(data) {
     const stats = document.getElementById('stats');
     const videos = data.videos || [];
     const totalWatched = videos.reduce((sum, video) => sum + (video.watchedDuration || 0), 0);
@@ -62,6 +64,7 @@ function updateStats() {
   });
 }
 
+// 手動評価フォームを表示する関数
 function showManualRatingForm() {
   const ratingForm = document.createElement('div');
   ratingForm.id = 'manual-rating-form';
@@ -99,6 +102,7 @@ function showManualRatingForm() {
   document.getElementById('submit-manual-rating').addEventListener('click', submitManualRating);
 }
 
+// 手動評価を送信する関数
 function submitManualRating() {
   const title = document.getElementById('manual-title').value.trim();
   const service = document.getElementById('manual-service').value;
@@ -123,25 +127,36 @@ function submitManualRating() {
     lastUpdated: new Date().toISOString()
   };
 
-  chrome.runtime.sendMessage({
-    action: "updateRating",
-    data: videoData
-  }, function(response) {
-    if (chrome.runtime.lastError) {
-      console.error('Error saving rating:', chrome.runtime.lastError);
-      alert('評価の保存中にエラーが発生しました。');
-    } else {
-      alert('評価が保存されました。');
-      document.getElementById('manual-rating-form').remove();
-      updateVideoList();
-      updateStats();
-    }
+  chrome.storage.sync.get('videos', function(data) {
+    let videos = data.videos || [];
+    videos.push(videoData);
+    chrome.storage.sync.set({ videos: videos }, function() {
+      if (chrome.runtime.lastError) {
+        console.error('Error saving rating:', chrome.runtime.lastError);
+        alert('評価の保存中にエラーが発生しました。');
+      } else {
+        alert('評価が保存されました。');
+        document.getElementById('manual-rating-form').remove();
+        updateVideoList();
+        updateStats();
+      }
+    });
   });
 }
 
+// データを同期する関数（chrome.storage.syncを使用しているため、この関数は実際には不要ですが、UIの一貫性のために残しています）
+function syncData() {
+  updateVideoList();
+  updateStats();
+  alert('データは自動的に同期されています');
+}
+
+// DOMが読み込まれた時の処理
 document.addEventListener('DOMContentLoaded', function() {
   updateVideoList();
   updateStats();
+
+  document.getElementById('sync-button').addEventListener('click', syncData);
 
   document.getElementById('manage-button').addEventListener('click', function() {
     chrome.tabs.create({url: 'manage.html'});
@@ -170,7 +185,10 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
-setInterval(() => {
-  updateVideoList();
-  updateStats();
-}, 30000);
+// chrome.storage.syncの変更を監視
+chrome.storage.onChanged.addListener(function(changes, namespace) {
+  if (namespace === 'sync' && changes.videos) {
+    updateVideoList();
+    updateStats();
+  }
+});

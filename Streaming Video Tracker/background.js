@@ -1,23 +1,15 @@
-// background.js
-
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === "updateVideoData" || message.action === "updateRating") {
-    updateVideoData(message.data);
-    sendResponse({ success: true });
-  }
-});
-
-chrome.webRequest.onBeforeRequest.addListener(
-  function(details) {
-    if (details.url.endsWith('/_/updateVideoData')) {
-      let decoder = new TextDecoder("utf-8");
-      let data = JSON.parse(decoder.decode(details.requestBody.raw[0].bytes));
-      updateVideoData(data.data);
+function syncData() {
+  chrome.storage.sync.get('videos', function(data) {
+    if (chrome.runtime.lastError) {
+      console.error('Error fetching synced data:', chrome.runtime.lastError);
+    } else {
+      chrome.storage.local.set({ videos: data.videos || [] }, function() {
+        console.log('Data synced from chrome.storage.sync to local storage');
+        updateGlobalBadge();
+      });
     }
-  },
-  {urls: ["<all_urls>"]},
-  ["requestBody"]
-);
+  });
+}
 
 function updateVideoData(data) {
   chrome.storage.local.get('videos', function(result) {
@@ -41,14 +33,26 @@ function updateVideoData(data) {
         lastUpdated: new Date().toISOString()
       });
     }
-    chrome.storage.local.set({ videos: videos }, () => {
+    
+    chrome.storage.local.set({ videos: videos }, function() {
       if (chrome.runtime.lastError) {
-        console.error('Error saving data:', chrome.runtime.lastError);
+        console.error('Error saving data to local storage:', chrome.runtime.lastError);
       } else {
-        console.log('Video data updated successfully');
+        console.log('Video data updated successfully in local storage');
         updateGlobalBadge();
+        updateSyncedData(videos);
       }
     });
+  });
+}
+
+function updateSyncedData(videos) {
+  chrome.storage.sync.set({ videos: videos }, function() {
+    if (chrome.runtime.lastError) {
+      console.error('Error saving data to synced storage:', chrome.runtime.lastError);
+    } else {
+      console.log('Data updated in chrome.storage.sync');
+    }
   });
 }
 
@@ -66,32 +70,29 @@ function updateGlobalBadge() {
   });
 }
 
-chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
-  chrome.storage.local.get('videos', function(result) {
-    let videos = result.videos || [];
-    let updatedVideos = videos.map(video => {
-      if (video.status === 'in progress') {
-        return { ...video, status: 'interrupted' };
-      }
-      return video;
-    });
-    
-    chrome.storage.local.set({ videos: updatedVideos }, () => {
-      if (chrome.runtime.lastError) {
-        console.error('Error updating video status on tab close:', chrome.runtime.lastError);
-      } else {
-        console.log('Video statuses updated on tab close');
-        updateGlobalBadge();
-      }
-    });
-  });
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === "updateVideoData" || message.action === "updateRating") {
+    updateVideoData(message.data);
+    sendResponse({ success: true });
+  } else if (message.action === "syncData") {
+    syncData();
+    sendResponse({ success: true });
+  }
 });
 
 chrome.runtime.onInstalled.addListener(() => {
   console.log('Extension installed');
+  syncData();
   updateGlobalBadge();
 });
 
-function handleError(error) {
-  console.error('An error occurred:', error);
-}
+// 定期的な同期（例：1時間ごと）
+setInterval(syncData, 3600000);
+
+// ストレージの変更を監視
+chrome.storage.onChanged.addListener((changes, namespace) => {
+  if (namespace === 'sync' && changes.videos) {
+    console.log('Synced storage changed, updating local storage');
+    syncData();
+  }
+});

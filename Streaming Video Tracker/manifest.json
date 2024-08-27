@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Streaming Video Tracker",
-  "version": "2.9",
-  "description": "複数のストリーミングサービスで視聴した動画を追跡します",
+  "version": "3.0",
+  "description": "複数のストリーミングサービスで視聴した動画を追跡し、複数のPCで共有します",
   "permissions": [
     "activeTab",
     "storage",

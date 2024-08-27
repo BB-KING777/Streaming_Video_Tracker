@@ -33,7 +33,7 @@
       font-weight: bold;
       font-size: 14px;
     }
-    #manage-button, #rate-button { 
+    #manage-button, #rate-button, #sync-button { 
       display: block; 
       width: 100%; 
       padding: 10px; 
@@ -52,11 +52,17 @@
     #rate-button {
       background-color: #008CBA;
     }
+    #sync-button {
+      background-color: #f44336;
+    }
     #manage-button:hover {
       background-color: #45a049;
     }
     #rate-button:hover {
       background-color: #007B9A;
+    }
+    #sync-button:hover {
+      background-color: #da190b;
     }
   </style>
 </head>
@@ -64,6 +70,7 @@
   <h1>視聴履歴</h1>
   <div id="videoList"></div>
   <div id="stats"></div>
+  <button id="sync-button">データを同期</button>
   <button id="rate-button">現在の動画を評価</button>
   <button id="manage-button">管理ページを開く</button>
   <script src="popup.js"></script>
